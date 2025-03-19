@@ -62,42 +62,45 @@ export default function LoginPage() {
     return true
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-
-    if (!validateForm()) {
-      return
-    }
-
+    
+    if (!validateForm()) return
+    
     setLoading(true)
-
+    setError(null)
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
-      if (error) {
-        throw error
-      }
-
-      if (data.session) {
-        // Immediately toast and redirect
+      
+      if (error) throw error
+      
+      if (data.user) {
         toast({
           title: "Login successful",
-          description: "You have been logged in successfully.",
+          description: "Welcome back!",
         })
-
+        
+        // Get the redirect path from URL params or default to dashboard
         const redirectTo = searchParams.get("redirectedFrom") || "/dashboard"
-        router.replace(redirectTo)
+        
+        // Wait a moment to ensure session is properly set before redirecting
+        setTimeout(() => {
+          // Use router.push for client-side navigation within the app
+          router.push(redirectTo)
+          // Force a refresh to ensure the session is fully loaded
+          router.refresh()
+        }, 300)
       }
     } catch (error: any) {
-      setError(error.message || "An error occurred during login.")
+      setError(error.message || "Failed to login. Please try again.")
       toast({
-        title: "Login failed",
-        description: error.message || "An error occurred during login.",
         variant: "destructive",
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
       })
     } finally {
       setLoading(false)
@@ -111,7 +114,7 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold">Log in</CardTitle>
           <CardDescription>Enter your email and password to log in to your account</CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
               <Alert variant="destructive">

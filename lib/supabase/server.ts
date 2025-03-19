@@ -1,46 +1,67 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import type { Database } from "@/lib/database.types"
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
+import { Database } from '../database.types'
 
+// Validate environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing required Supabase environment variables')
+}
+
+// Cache for cookie values to avoid repeated async calls
+let cookieCache: Record<string, string> = {}
+
+/**
+ * Create a Supabase client for server components
+ * This approach directly uses cookies() and should only be used in Server Components
+ * or Route Handlers where you can properly await the result
+ */
 export async function createClient() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  // Pre-load all cookies into a cache to avoid multiple async calls
+  const allCookies = cookieStore.getAll()
+  cookieCache = {}
+  
+  for (const cookie of allCookies) {
+    cookieCache[cookie.name] = cookie.value
+  }
+  
+  return createSupabaseClient<Database>(
+    supabaseUrl as string,
+    supabaseAnonKey as string,
     {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            console.error('Error setting cookie:', error)
-          }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            console.error('Error removing cookie:', error)
-          }
-        },
-        getAll() {
-          return Array.from(cookieStore.getAll()).map(cookie => ({
-            name: cookie.name,
-            value: cookie.value,
-            ...cookie
-          }))
-        },
-        setAll(cookieList: { name: string; value: string; options?: any }[]) {
-          try {
-            cookieList.forEach(cookie => {
-              cookieStore.set({ name: cookie.name, value: cookie.value, ...cookie.options })
+      auth: {
+        persistSession: true,
+        // Use our custom cookie handler
+        storageKey: 'sb-auth-token',
+        storage: {
+          getItem: (key) => {
+            return cookieCache[key]
+          },
+          setItem: (key, value) => {
+            cookieCache[key] = value
+            cookieStore.set({ 
+              name: key, 
+              value, 
+              path: '/',
+              maxAge: 60 * 60 * 24 * 7, // 1 week
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production'
             })
-          } catch (error) {
-            console.error('Error setting cookies:', error)
+          },
+          removeItem: (key) => {
+            delete cookieCache[key]
+            cookieStore.set({ 
+              name: key, 
+              value: '', 
+              path: '/',
+              maxAge: 0,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production'
+            })
           }
         }
       }
@@ -48,68 +69,40 @@ export async function createClient() {
   )
 }
 
-// Use this function when you need to modify specific cookie behavior
-export async function createClientWithCustomCookies() {
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        async get(name) {
-          try {
-            return cookies().get(name)?.value
-          } catch {
-            return undefined
-          }
-        },
-        async set(name, value, options) {
-          try {
-            cookies().set({ name, value, ...options })
-          } catch (error) {
-            console.error('Error setting cookie:', error)
-          }
-        },
-        async remove(name, options) {
-          try {
-            cookies().set({ name, value: "", ...options })
-          } catch (error) {
-            console.error('Error removing cookie:', error)
-          }
-        }
-      }
-    }
-  )
-}
-
-// Alternative implementation for server components that need to await cookies
-export async function createClientForServerComponent() {
-  const cookieStore = cookies()
+/**
+ * For API routes that use cookies from a Request object
+ */
+export function createRouteHandlerClient(request: Request) {
+  const requestHeaders = new Headers(request.headers)
+  const cookieString = requestHeaders.get('cookie') || ''
   
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  // Parse cookies from string
+  const parsedCookies: Record<string, string> = {}
+  cookieString.split(';').forEach(cookie => {
+    const [name, ...rest] = cookie.trim().split('=')
+    if (name) {
+      parsedCookies[name] = rest.join('=')
+    }
+  })
+  
+  return createSupabaseClient<Database>(
+    supabaseUrl as string,
+    supabaseAnonKey as string,
     {
-      cookies: {
-        async get(name) {
-          try {
-            const cookie = await cookieStore.get(name)
-            return cookie?.value
-          } catch {
-            return undefined
-          }
-        },
-        async set(name, value, options) {
-          try {
-            await cookieStore.set({ name, value, ...options })
-          } catch {
-            // Handle errors
-          }
-        },
-        async remove(name, options) {
-          try {
-            await cookieStore.set({ name, value: "", ...options })
-          } catch {
-            // Handle errors
+      auth: {
+        persistSession: true,
+        storageKey: 'sb-auth-token',
+        storage: {
+          getItem: (key) => {
+            return parsedCookies[key]
+          },
+          setItem: (key, value) => {
+            parsedCookies[key] = value
+            // Note: The caller is responsible for setting cookies in the response
+          },
+          removeItem: (key) => {
+            delete parsedCookies[key]
+            // Note: The caller is responsible for removing cookies in the response
           }
         }
       }
@@ -117,3 +110,43 @@ export async function createClientForServerComponent() {
   )
 }
 
+/**
+ * Dedicated client for middleware
+ */
+export function createMiddlewareClient(req: Request, res: Response) {
+  const requestHeaders = new Headers(req.headers)
+  const cookieString = requestHeaders.get('cookie') || ''
+  
+  // Parse cookies from string
+  const parsedCookies: Record<string, string> = {}
+  cookieString.split(';').forEach(cookie => {
+    const [name, ...rest] = cookie.trim().split('=')
+    if (name) {
+      parsedCookies[name] = rest.join('=')
+    }
+  })
+  
+  return createSupabaseClient<Database>(
+    supabaseUrl as string,
+    supabaseAnonKey as string,
+    {
+      auth: {
+        persistSession: true,
+        storageKey: 'sb-auth-token',
+        storage: {
+          getItem: (key) => {
+            return parsedCookies[key]
+          },
+          setItem: (key, value) => {
+            parsedCookies[key] = value
+            // Note: The caller should set cookies on the response
+          },
+          removeItem: (key) => {
+            delete parsedCookies[key]
+            // Note: The caller should handle removing cookies
+          }
+        }
+      }
+    }
+  )
+}

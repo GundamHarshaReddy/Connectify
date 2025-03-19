@@ -10,43 +10,43 @@ const protectedPaths = [
   "/dashboard",
   "/bookings",
   "/messages",
-  "/profile",
-  "/providers",
-  "/search",
+  "/profile"
 ]
+
+// API paths should generally be excluded from auth checks to avoid circular dependencies
+const apiPaths = ["/api/"]
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
+  
+  // Create a Supabase client configured to use cookies
   const supabase = createMiddlewareClient({ req: request, res })
-
+  
+  const currentPath = new URL(request.url).pathname
+  
+  // Skip middleware for API routes to avoid auth-related issues
+  if (apiPaths.some(path => currentPath.startsWith(path))) {
+    return res
+  }
+  
+  // Refresh session if expired - takes advantage of Supabase's handling
   const {
     data: { session },
   } = await supabase.auth.getSession()
-
-  const currentPath = request.nextUrl.pathname
   
-  // Check if current path is a protected path or starts with one
-  const isProtectedPath = protectedPaths.some(path => 
-    currentPath === path || currentPath.startsWith(`${path}/`)
-  )
-  
-  const isPublicPath = publicPaths.some(path => 
-    currentPath === path || currentPath.startsWith(`${path}/`)
-  )
-
-  // If user is not signed in and trying to access a protected route
-  if (!session && isProtectedPath) {
-    // Create the URL with the redirect information
+  // Check if the path is protected and user is not authenticated
+  if (!session && protectedPaths.some(path => currentPath.startsWith(path))) {
+    // Create a URL to redirect to login page with the current URL as the redirectedFrom parameter
     const redirectUrl = new URL('/auth/login', request.url)
-    redirectUrl.searchParams.set("redirectedFrom", request.nextUrl.pathname)
+    redirectUrl.searchParams.set('redirectedFrom', currentPath)
     return NextResponse.redirect(redirectUrl)
   }
-
-  // If user is signed in and trying to access auth pages
+  
+  // If the user is authenticated and tries to access auth pages, redirect to dashboard
   if (session && currentPath.startsWith("/auth/")) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
-
+  
   return res
 }
 

@@ -31,9 +31,9 @@ export default function ProvidersPage() {
   const { toast } = useToast()
   const [providers, setProviders] = useState<Provider[]>([])
   const [loading, setLoading] = useState(true)
-  const [serviceCategory, setServiceCategory] = useState("")
-  const [location, setLocation] = useState("")
-  const [priceRange, setPriceRange] = useState("")
+  const [serviceCategory, setServiceCategory] = useState("all")
+  const [location, setLocation] = useState("all")
+  const [priceRange, setPriceRange] = useState("all")
   const [categories, setCategories] = useState<string[]>([])
   const [locations, setLocations] = useState<string[]>([])
 
@@ -45,17 +45,20 @@ export default function ProvidersPage() {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('name')
+      const response = await fetch('/api/providers/categories')
+      if (!response.ok) throw new Error('Failed to fetch categories')
       
-      if (error) throw error
-      
-      if (data) {
-        setCategories(data.map(cat => cat.name))
+      const data = await response.json()
+      if (data.categories) {
+        setCategories(data.categories.map((cat: any) => cat.name || cat))
       }
     } catch (error: any) {
       console.error('Error fetching categories:', error.message)
+      toast({
+        title: "Error fetching categories",
+        description: error.message,
+        variant: "destructive",
+      })
     }
   }
 
@@ -71,29 +74,49 @@ export default function ProvidersPage() {
   const fetchProviders = async () => {
     setLoading(true)
     try {
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'provider')
-      
-      if (serviceCategory) {
-        query = query.eq('service_category', serviceCategory)
+      // Instead of directly querying Supabase, use the API route
+      const params = new URLSearchParams()
+      if (serviceCategory !== "all" && serviceCategory) params.set("category", serviceCategory)
+      if (location && location !== "all") params.set("location", location)
+      if (priceRange && priceRange !== "all") {
+        // Convert price range to min/max values
+        if (priceRange === "$") {
+          params.set("minPrice", "0")
+          params.set("maxPrice", "50")
+        } else if (priceRange === "$$") {
+          params.set("minPrice", "50")
+          params.set("maxPrice", "100")
+        } else if (priceRange === "$$$") {
+          params.set("minPrice", "100")
+          params.set("maxPrice", "1000")
+        }
       }
       
-      if (location) {
-        query = query.eq('location', location)
+      console.log("Fetching providers with params:", Object.fromEntries(params))
+      const response = await fetch(`/api/providers?${params.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch providers")
       }
       
-      if (priceRange) {
-        query = query.eq('price_range', priceRange)
-      }
+      const data = await response.json()
       
-      const { data, error } = await query
-      
-      if (error) throw error
-      
-      if (data) {
-        setProviders(data as Provider[])
+      // Transform API data to match the Provider type
+      if (data.providers) {
+        const formattedProviders: Provider[] = data.providers.map((p: any) => ({
+          id: p.id,
+          full_name: p.name,
+          avatar_url: p.avatar_url,
+          bio: p.description,
+          location: p.location,
+          avg_rating: p.rating,
+          service_category: p.category,
+          price_range: p.hourly_rate ? `$${p.hourly_rate}/hr` : undefined,
+          featured: Math.random() > 0.8 // Just for demo purposes
+        }))
+        setProviders(formattedProviders)
+      } else {
+        setProviders([])
       }
     } catch (error: any) {
       toast({
@@ -111,9 +134,9 @@ export default function ProvidersPage() {
   }
 
   const resetFilters = () => {
-    setServiceCategory("")
-    setLocation("")
-    setPriceRange("")
+    setServiceCategory("all")
+    setLocation("all")
+    setPriceRange("all")
     fetchProviders()
   }
 
@@ -153,9 +176,9 @@ export default function ProvidersPage() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem key="all-categories" value="all">All Categories</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                  <SelectItem key={`category-${category}`} value={category}>{category}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -168,9 +191,9 @@ export default function ProvidersPage() {
                 <SelectValue placeholder="All Locations" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
+                <SelectItem key="all-locations" value="all">All Locations</SelectItem>
                 {locations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                  <SelectItem key={`location-${loc}`} value={loc}>{loc}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -183,10 +206,10 @@ export default function ProvidersPage() {
                 <SelectValue placeholder="Any Price" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Price</SelectItem>
-                <SelectItem value="$">$ - Budget</SelectItem>
-                <SelectItem value="$$">$$ - Average</SelectItem>
-                <SelectItem value="$$$">$$$ - Premium</SelectItem>
+                <SelectItem key="all-price" value="all">Any Price</SelectItem>
+                <SelectItem key="price-budget" value="$">$ - Budget</SelectItem>
+                <SelectItem key="price-average" value="$$">$$ - Average</SelectItem>
+                <SelectItem key="price-premium" value="$$$">$$$ - Premium</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -268,4 +291,4 @@ export default function ProvidersPage() {
       )}
     </div>
   )
-} 
+}
