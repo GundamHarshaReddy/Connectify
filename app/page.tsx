@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, CheckCircle, Star, MapPin, CreditCard } from "lucide-react"
 import ServiceCategoryCards from "@/components/service-category-cards"
-import HowItWorks from "@/components/how-it-works"
+import { HowItWorks } from "@/components/how-it-works"
 import ChatbotButton from "@/components/chatbot-button"
 
 export default function Home() {
@@ -23,14 +23,14 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Link href="/auth/register">
+                <Link href="/get-started">
                   <Button size="lg" className="gap-1">
                     Get Started <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/auth/register?role=provider">
+                <Link href="/get-started">
                   <Button size="lg" variant="outline">
-                    Become a Provider
+                    Learn More
                   </Button>
                 </Link>
               </div>
@@ -211,9 +211,9 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <Link href="/auth/register">
+              <Link href="/get-started">
                 <Button size="lg" variant="secondary" className="gap-1">
-                  Sign Up Now <ArrowRight className="h-4 w-4" />
+                  Get Started Now <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>

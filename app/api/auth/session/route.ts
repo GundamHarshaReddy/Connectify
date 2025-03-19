@@ -5,9 +5,8 @@ import { NextResponse } from "next/server"
 export async function POST(request: Request) {
   try {
     const requestUrl = new URL(request.url)
-    const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
+      cookies
     })
     const { session } = await request.json()
   

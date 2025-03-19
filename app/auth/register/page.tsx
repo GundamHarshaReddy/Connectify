@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSupabase } from "@/components/supabase-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useSearchParams } from "next/navigation"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function RegisterPage() {
   const { supabase } = useSupabase()
@@ -22,12 +21,70 @@ export default function RegisterPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [role, setRole] = useState(searchParams.get("role") || "customer")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Check if user is already logged in - optimized
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data.session && isMounted) {
+        router.replace("/dashboard")
+      }
+    }
+    
+    checkSession()
+    
+    return () => {
+      isMounted = false;
+    }
+  }, [supabase, router])
+
+  const validateForm = () => {
+    if (!fullName) {
+      setError("Full name is required")
+      return false
+    }
+    if (!email) {
+      setError("Email is required")
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address")
+      return false
+    }
+    if (!password) {
+      setError("Password is required")
+      return false
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      return false
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return false
+    }
+    if (!role) {
+      setError("Please select a role")
+      return false
+    }
+    return true
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    if (!validateForm()) {
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -58,18 +115,20 @@ export default function RegisterPage() {
           throw profileError
         }
 
-        // If the user is a provider, create a provider record
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created successfully.",
+        })
+
+        // Immediate redirect without delay
         if (role === "provider") {
-          router.push("/provider/onboarding")
+          router.replace("/provider/onboarding")
         } else {
-          toast({
-            title: "Registration successful",
-            description: "Your account has been created successfully.",
-          })
-          router.push("/dashboard")
+          router.replace("/dashboard")
         }
       }
     } catch (error: any) {
+      setError(error.message || "An error occurred during registration.")
       toast({
         title: "Registration failed",
         description: error.message || "An error occurred during registration.",
@@ -89,6 +148,11 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -97,6 +161,7 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -108,6 +173,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -118,11 +184,23 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">I am a</Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={setRole} disabled={loading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>

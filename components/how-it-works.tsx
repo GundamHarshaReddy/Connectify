@@ -1,6 +1,6 @@
 import { Search, CheckCircle, Calendar, Star } from "lucide-react"
 
-export default function HowItWorks() {
+export function HowItWorks() {
   const steps = [
     {
       number: "1",

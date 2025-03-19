@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const maxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : 1000
 
   try {
-    // Create a new Supabase client
+    // Create a new Supabase client with the updated function
     const supabase = await createClient()
     
     // Start building the query
@@ -63,6 +63,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch providers" }, { status: 500 })
     }
 
+    if (!providers || providers.length === 0) {
+      return NextResponse.json({ providers: [] })
+    }
+
     // Get ratings in a separate query
     const providerIds = providers.map(provider => provider.id)
     let ratings: Record<string, number> = {}
@@ -94,22 +98,24 @@ export async function GET(request: NextRequest) {
     }
     
     // Process and filter the results
-    const processedProviders = providers.map(provider => {
-      // Use calculated rating or default to 0
-      const rating = ratings[provider.id] || 0
-      
-      return {
-        id: provider.id,
-        name: provider.profiles.full_name,
-        avatar_url: provider.profiles.avatar_url,
-        category: provider.category,
-        description: provider.description,
-        hourly_rate: provider.hourly_rate,
-        location: provider.location,
-        rating: rating,
-        profile_id: provider.profile_id
-      }
-    })
+    const processedProviders = providers
+      .filter(provider => provider.profiles) // Filter out providers without profiles
+      .map(provider => {
+        // Use calculated rating or default to 0
+        const rating = ratings[provider.id] || 0
+        
+        return {
+          id: provider.id,
+          name: provider.profiles?.full_name || 'Unknown Provider',
+          avatar_url: provider.profiles?.avatar_url || null,
+          category: provider.category,
+          description: provider.description,
+          hourly_rate: provider.hourly_rate,
+          location: provider.location,
+          rating: rating,
+          profile_id: provider.profile_id
+        }
+      })
     
     // Filter by minimum rating
     const filteredProviders = processedProviders.filter(provider => provider.rating >= minRating)

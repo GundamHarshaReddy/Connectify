@@ -57,24 +57,33 @@ export default function Navbar() {
             <span className="text-xl font-bold">LocalServices</span>
           </Link>
           <nav className="hidden md:flex gap-6 ml-6">
-            <Link href="/search" className="text-sm font-medium transition-colors hover:text-primary">
-              Find Services
-            </Link>
-            <Link href="/providers" className="text-sm font-medium transition-colors hover:text-primary">
-              Service Providers
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
+                  Dashboard
+                </Link>
+                <Link href="/search" className="text-sm font-medium transition-colors hover:text-primary">
+                  Find Services
+                </Link>
+                <Link href="/providers" className="text-sm font-medium transition-colors hover:text-primary">
+                  Service Providers
+                </Link>
+              </>
+            ) : null}
             <Link href="/how-it-works" className="text-sm font-medium transition-colors hover:text-primary">
               How It Works
             </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/search">
-            <Button variant="ghost" size="icon" className="mr-2">
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </Link>
+          {user && (
+            <Link href="/search">
+              <Button variant="ghost" size="icon" className="mr-2">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Button>
+            </Link>
+          )}
           <ModeToggle />
           {!loading && (
             <>
@@ -143,12 +152,19 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/search">Find Services</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/providers">Service Providers</Link>
-              </DropdownMenuItem>
+              {user ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/search">Find Services</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/providers">Service Providers</Link>
+                  </DropdownMenuItem>
+                </>
+              ) : null}
               <DropdownMenuItem asChild>
                 <Link href="/how-it-works">How It Works</Link>
               </DropdownMenuItem>

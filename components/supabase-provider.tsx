@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/database.types"
@@ -14,21 +14,33 @@ type SupabaseContext = {
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const [supabase] = useState(() => createClient())
+  // Use useMemo to ensure supabase client is only created once
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.access_token !== undefined) {
-        // Update cached session
-        fetch("/api/auth/session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ session }),
-        })
+        // Update cached session using fetch with minimal overhead
+        const updateSession = async () => {
+          try {
+            await fetch("/api/auth/session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ session }),
+              // Use these options to optimize the fetch request
+              cache: 'no-store',
+              keepalive: true
+            })
+          } catch (error) {
+            console.error("Error updating session:", error)
+          }
+        }
+        
+        updateSession()
       }
     })
 

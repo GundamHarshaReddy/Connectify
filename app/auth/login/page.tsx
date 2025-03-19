@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSupabase } from "@/components/supabase-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,21 +10,70 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const { supabase } = useSupabase()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Check if user is already logged in - optimized
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      
+      if (data.session && isMounted) {
+        const redirectTo = searchParams.get("redirectedFrom") || "/dashboard"
+        router.replace(redirectTo)
+      }
+    }
+    
+    checkSession()
+    
+    return () => {
+      isMounted = false;
+    }
+  }, [supabase, router, searchParams])
+
+  const validateForm = () => {
+    if (!email) {
+      setError("Email is required")
+      return false
+    }
+    if (!password) {
+      setError("Password is required")
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address")
+      return false
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      return false
+    }
+    return true
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    if (!validateForm()) {
+      return
+    }
+
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -34,14 +82,18 @@ export default function LoginPage() {
         throw error
       }
 
-      toast({
-        title: "Login successful",
-        description: "You have been logged in successfully.",
-      })
+      if (data.session) {
+        // Immediately toast and redirect
+        toast({
+          title: "Login successful",
+          description: "You have been logged in successfully.",
+        })
 
-      router.push("/dashboard")
-      router.refresh()
+        const redirectTo = searchParams.get("redirectedFrom") || "/dashboard"
+        router.replace(redirectTo)
+      }
     } catch (error: any) {
+      setError(error.message || "An error occurred during login.")
       toast({
         title: "Login failed",
         description: error.message || "An error occurred during login.",
@@ -61,6 +113,11 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -70,6 +127,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -85,6 +143,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
           </CardContent>
