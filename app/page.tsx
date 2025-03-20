@@ -37,7 +37,7 @@ export default function Home() {
             <div className="flex justify-center lg:justify-end">
               <div className="relative w-full max-w-[500px] aspect-video rounded-xl overflow-hidden shadow-2xl">
                 <img
-                  src="/placeholder.svg?height=500&width=800"
+                  src="/service-hero.jpg"
                   alt="Local service providers"
                   className="object-cover w-full h-full"
                 />

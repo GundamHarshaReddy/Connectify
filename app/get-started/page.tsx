@@ -21,9 +21,10 @@ export default function GetStarted() {
               </p>
             </div>
             
+            {/* Fix the hero image path - use correct path from public folder */}
             <div className="w-full max-w-3xl relative h-[300px] mb-8 rounded-lg overflow-hidden">
               <Image 
-                src="/images/hero/service-hero.jpg"
+                src="/download.jpeg"
                 alt="Platform Hero Image"
                 fill
                 priority
@@ -109,9 +110,10 @@ export default function GetStarted() {
             <div className="mt-16 w-full max-w-4xl">
               <h2 className="text-3xl font-bold mb-8">Why Choose Our Platform?</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                {/* Fix the features image path */}
                 <div className="relative h-[250px] rounded-lg overflow-hidden">
                   <Image 
-                    src="/images/features/platform-features.jpg"
+                    src="/download.jpeg"
                     alt="Platform Features"
                     fill
                     style={{ objectFit: 'cover' }}
