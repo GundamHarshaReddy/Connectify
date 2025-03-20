@@ -2,18 +2,41 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { MessageSquare, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useChat } from "ai/react"
+import { useSupabase } from "@/components/supabase-provider"
 
 export default function ChatbotButton() {
   const [open, setOpen] = useState(false)
+  const { supabase } = useSupabase()
+  const [userRole, setUserRole] = useState<'customer' | 'provider' | null>(null)
+
+  useEffect(() => {
+    const getUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.user_metadata?.role) {
+        setUserRole(user.user_metadata.role)
+      }
+    }
+    getUserRole()
+  }, [supabase])
+
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     api: "/api/chatbot",
+    initialMessages: [
+      {
+        id: "welcome",
+        role: "system",
+        content: userRole === 'provider' 
+          ? "Welcome to Connectify! I can help you manage your services, bookings, and provider settings. What do you need help with?"
+          : "Welcome to Connectify! I can help you find and book services. What are you looking for?",
+      }
+    ],
   })
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -25,22 +48,27 @@ export default function ChatbotButton() {
     <div className="fixed bottom-4 right-4 z-50">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
+          <Button size="icon" className="rounded-full h-14 w-14 shadow-lg">
             <MessageSquare className="h-6 w-6" />
             <span className="sr-only">Open chatbot</span>
           </Button>
         </SheetTrigger>
         <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-[90vh]">
           <SheetHeader className="border-b p-4">
-            <SheetTitle>AI Assistant</SheetTitle>
+            <SheetTitle>
+              <span className="text-xl font-bold">
+                Connectify
+                <span className="text-primary">.</span>
+              </span>
+            </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                 <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                <h3 className="text-lg font-medium">How can I help you today?</h3>
+                <h3 className="text-lg font-medium">Welcome to <span className="text-primary font-bold">Connectify</span></h3>
                 <p className="text-sm">
-                  Ask me about finding services, booking appointments, or anything else you need help with.
+                  How can I assist you today with finding or managing services?
                 </p>
               </div>
             ) : (

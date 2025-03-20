@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, CheckCircle, Star, MapPin, CreditCard } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function GetStarted() {
   return (
@@ -18,6 +19,18 @@ export default function GetStarted() {
               <p className="max-w-[600px] text-gray-500 md:text-xl dark:text-gray-400 mx-auto">
                 Welcome to our platform! Choose how you'd like to continue.
               </p>
+            </div>
+            
+            <div className="w-full max-w-3xl relative h-[300px] mb-8 rounded-lg overflow-hidden">
+              <Image 
+                src="/images/hero/service-hero.jpg"
+                alt="Platform Hero Image"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                style={{ objectFit: 'cover' }}
+                className="rounded-lg"
+              />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl">
@@ -92,9 +105,47 @@ export default function GetStarted() {
                 </Button>
               </Link>
             </div>
+
+            <div className="mt-16 w-full max-w-4xl">
+              <h2 className="text-3xl font-bold mb-8">Why Choose Our Platform?</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="relative h-[250px] rounded-lg overflow-hidden">
+                  <Image 
+                    src="/images/features/platform-features.jpg"
+                    alt="Platform Features"
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="text-left space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <Star className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-semibold text-lg">Verified Reviews</h3>
+                      <p className="text-gray-500 dark:text-gray-400">See ratings and reviews from real customers</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="h-6 w-6 text-blue-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-semibold text-lg">Local Providers</h3>
+                      <p className="text-gray-500 dark:text-gray-400">Find trusted professionals in your area</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CreditCard className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-semibold text-lg">Secure Payments</h3>
+                      <p className="text-gray-500 dark:text-gray-400">Pay safely through our protected platform</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </div>
   )
-} 
+}

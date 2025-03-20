@@ -1,25 +1,31 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, JSX, ReactNode } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Wrench, Home, Car, Scissors, Laptop, BookOpen, Dumbbell, Music, Shirt, Camera, Utensils, Palette } from "lucide-react"
+import { Wrench, Home as HomeIcon, Car, Scissors, Laptop, BookOpen, Dumbbell, Music, Shirt, Camera, Utensils, Palette, LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import Image from "next/image"
 
-// Define category icon mapping
-const categoryIcons: Record<string, JSX.Element> = {
-  "Tutoring": <BookOpen className="h-8 w-8" />,
-  "Home Repair": <Wrench className="h-8 w-8" />,
-  "Personal Training": <Dumbbell className="h-8 w-8" />,
-  "Cleaning": <Home className="h-8 w-8" />,
-  "Auto Repair": <Car className="h-8 w-8" />,
-  "Beauty & Wellness": <Scissors className="h-8 w-8" />,
-  "Music Lessons": <Music className="h-8 w-8" />,
-  "Tech Support": <Laptop className="h-8 w-8" />,
-  "Fashion Services": <Shirt className="h-8 w-8" />,
-  "Photography": <Camera className="h-8 w-8" />,
-  "Catering": <Utensils className="h-8 w-8" />,
-  "Art & Design": <Palette className="h-8 w-8" />
+// Define a type for the category icons mapping
+type CategoryIconMap = {
+  [key: string]: LucideIcon
+}
+
+// Update the categoryIcons object with proper typing
+const categoryIcons: CategoryIconMap = {
+  "Tutoring": BookOpen,
+  "Home Repair": Wrench,
+  "Personal Training": Dumbbell,
+  "Cleaning": HomeIcon, // Changed from House to Home
+  "Auto Repair": Car,
+  "Beauty & Wellness": Scissors,
+  "Music Lessons": Music,
+  "Tech Support": Laptop,
+  "Fashion Services": Shirt,
+  "Photography": Camera,
+  "Catering": Utensils,
+  "Art & Design": Palette
 }
 
 // Define category colors
@@ -44,6 +50,38 @@ type CategoryData = {
   slug: string;
   icon: string | null;
   created_at: string;
+}
+
+interface CategoryCardProps {
+  name: string
+  icon: React.ReactNode
+  slug: string
+  iconUrl?: string | null
+}
+
+export function CategoryCard({ name, icon, slug, iconUrl }: CategoryCardProps) {
+  return (
+    <Link href={`/services/category/${slug}`}>
+      <Card className="hover:shadow-md transition-shadow duration-200">
+        <CardContent className="flex flex-col items-center justify-center p-6">
+          <div className="mb-4 rounded-full bg-primary/10 p-3 text-primary relative w-14 h-14 flex items-center justify-center">
+            {iconUrl ? (
+              <Image 
+                src={iconUrl} 
+                alt={name} 
+                width={32} 
+                height={32} 
+                className="object-contain"
+              />
+            ) : (
+              icon
+            )}
+          </div>
+          <h3 className="text-center font-medium">{name}</h3>
+        </CardContent>
+      </Card>
+    </Link>
+  )
 }
 
 export default function ServiceCategoryCards() {
@@ -78,17 +116,37 @@ export default function ServiceCategoryCards() {
     fetchCategories()
   }, [toast])
 
+  type IconType = JSX.Element | null
+
+  const getIconComponent = (iconName: string | null): IconType => {
+    if (!iconName) return null
+    
+    const IconComponent = categoryIcons[iconName]
+    if (IconComponent) {
+      return <IconComponent className="h-6 w-6" />
+    }
+    
+    return null
+  }
+
   // Generate a category card with the correct icon and color
   const getCategoryCard = (category: CategoryData, index: number) => {
     const colorIndex = index % categoryColors.length
     const color = categoryColors[colorIndex]
     
-    // Try to get icon from category data first, falling back to hardcoded mapping
-    let icon = categoryIcons[category.name] || <Wrench className="h-8 w-8" /> // Default icon
+    // Initialize icon with default
+    let icon: IconType = <Wrench className="h-8 w-8" />
+    let iconUrl: string | null = null
     
-    // If we have icon info in category data, use it if possible
-    if (category.icon && categoryIcons[category.icon]) {
-      icon = categoryIcons[category.icon]
+    if (category.icon) {
+      if (category.icon.startsWith('/') || category.icon.startsWith('http')) {
+        iconUrl = category.icon
+      } else {
+        const customIcon = getIconComponent(category.icon)
+        if (customIcon) {
+          icon = customIcon
+        }
+      }
     }
     
     const href = `/search?category=${encodeURIComponent(category.slug)}`
@@ -97,7 +155,19 @@ export default function ServiceCategoryCards() {
       <Link href={href} key={category.id}>
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
           <CardContent className="flex flex-col items-center justify-center p-6">
-            <div className={`p-3 rounded-full ${color.bg} ${color.text} mb-4`}>{icon}</div>
+            <div className={`p-3 rounded-full ${color.bg} ${color.text} mb-4 relative w-14 h-14 flex items-center justify-center`}>
+              {iconUrl ? (
+                <Image 
+                  src={iconUrl} 
+                  alt={category.name} 
+                  width={32} 
+                  height={32} 
+                  className="object-contain"
+                />
+              ) : (
+                icon
+              )}
+            </div>
             <h3 className="font-medium text-center">{category.name}</h3>
           </CardContent>
         </Card>

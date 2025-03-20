@@ -24,13 +24,12 @@ export async function GET(request: NextRequest) {
       maxPrice 
     })
     
-    // Build the query
+    // First make separate queries to ensure the join works properly
+    
+    // 1. Query providers
     let providersQuery = supabase
       .from("providers")
-      .select(`
-        *,
-        profiles:profile_id(*)
-      `)
+      .select("*")
     
     // Filter by category if provided
     if (category && category !== "all") {
@@ -62,14 +61,9 @@ export async function GET(request: NextRequest) {
         .lte("hourly_rate", maxPrice)
     }
     
-    // Execute the query
+    // Execute the providers query
     const { data: providers, error } = await providersQuery
-    console.log("Query results:", { 
-      count: providers?.length || 0, 
-      error: error?.message,
-      providers: providers?.slice(0, 2) // Log first 2 providers for debugging
-    })
-
+    
     if (error) {
       console.error("Error fetching providers:", error)
       return NextResponse.json({ error: "Failed to fetch providers" }, { status: 500 })
@@ -78,36 +72,35 @@ export async function GET(request: NextRequest) {
     if (!providers || providers.length === 0) {
       return NextResponse.json({ providers: [] })
     }
-
-    // Get profiles for providers where the join didn't work
-    const providersWithoutProfiles = providers.filter(p => !p.profiles).map(p => p.profile_id)
-    let profilesMap = {}
     
-    if (providersWithoutProfiles.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", providersWithoutProfiles)
-      
-      if (profiles) {
-        profilesMap = profiles.reduce((acc, profile) => {
-          acc[profile.id] = profile
-          return acc
-        }, {})
-      }
+    console.log(`Found ${providers.length} providers before filtering`)
+    
+    // 2. Get all relevant profiles in a separate query
+    const profileIds = providers.map(p => p.profile_id)
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", profileIds)
+    
+    // Create a map for easier lookup
+    const profileMap: Record<string, any> = {}
+    if (profiles) {
+      profiles.forEach(profile => {
+        profileMap[profile.id] = profile
+      })
     }
-
-    // Get ratings in a separate query
+    
+    // 3. Get ratings in a separate query
     const providerIds = providers.map(provider => provider.id)
     let ratings: Record<string, number> = {}
     
     if (providerIds.length > 0) {
-      const { data: reviewsData, error: reviewsError } = await supabase
+      const { data: reviewsData } = await supabase
         .from("reviews")
         .select("provider_id, rating")
         .in("provider_id", providerIds)
       
-      if (!reviewsError && reviewsData) {
+      if (reviewsData?.length) {
         // Calculate average ratings
         const ratingsByProvider: Record<string, number[]> = {}
         
@@ -127,24 +120,32 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Process the results - don't filter out providers without profiles
+    // Helper function to format provider name correctly
+    function formatProviderName(profile: any, provider: any) {
+      if (profile?.full_name) return profile.full_name;
+      if (provider.name && !provider.name.includes(`${provider.category} Provider`)) {
+        return provider.name;
+      }
+      return provider.category || 'Service Provider';
+    }
+    
+    // 4. Process and combine the data
     const processedProviders = providers.map(provider => {
-      // Use calculated rating or default to 0
-      const rating = ratings[provider.id] || 0
-      
-      // Get profile data either from the join or from our separate query
-      const profile = provider.profiles || profilesMap[provider.profile_id] || {}
+      // Use the profile from our map
+      const profile = profileMap[provider.profile_id]
       
       return {
         id: provider.id,
-        name: profile?.full_name || 'Unknown Provider',
+        name: formatProviderName(profile, provider),
         avatar_url: profile?.avatar_url || null,
-        category: provider.category,
-        description: provider.description,
-        hourly_rate: provider.hourly_rate,
-        location: provider.location,
-        rating: rating,
-        profile_id: provider.profile_id
+        category: provider.category || "Unknown",
+        description: provider.description || null,
+        hourly_rate: provider.hourly_rate || 0,
+        location: provider.location || "Unknown",
+        rating: ratings[provider.id] || 0,
+        profile_id: provider.profile_id,
+        // Include raw data for debugging if needed
+        _profile: profile || null
       }
     })
     
@@ -164,7 +165,13 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`Found ${searchResults.length} providers after filtering`)
-    return NextResponse.json({ providers: searchResults })
+    return NextResponse.json({ 
+      providers: searchResults,
+      debug: {
+        profilesFound: profiles?.length || 0,
+        providersTotal: providers.length
+      }
+    })
   } catch (error) {
     console.error("Error in providers API:", error)
     return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 })

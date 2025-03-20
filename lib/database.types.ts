@@ -8,25 +8,34 @@ export interface Database {
           id: string
           created_at: string
           updated_at: string
-          full_name: string | null
+          full_name: string
+          email: string | null
           avatar_url: string | null
           role: "customer" | "provider"
+          latitude: number | null
+          longitude: number | null
         }
         Insert: {
           id: string
           created_at?: string
           updated_at?: string
-          full_name?: string | null
+          full_name: string
+          email?: string | null
           avatar_url?: string | null
-          role?: "customer" | "provider"
+          role: "customer" | "provider"
+          latitude?: number | null
+          longitude?: number | null
         }
         Update: {
           id?: string
           created_at?: string
           updated_at?: string
-          full_name?: string | null
+          full_name?: string
+          email?: string | null
           avatar_url?: string | null
           role?: "customer" | "provider"
+          latitude?: number | null
+          longitude?: number | null
         }
       }
       providers: {

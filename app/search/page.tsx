@@ -47,6 +47,7 @@ export default function SearchPage() {
   const router = useRouter()
   const [providers, setProviders] = useState<Provider[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [countries, setCountries] = useState<string[]>([]) // Add state for countries
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "")
   const [category, setCategory] = useState(searchParams.get("category") || "")
@@ -144,6 +145,51 @@ export default function SearchPage() {
       setLocationEnabled(false)
     }
   }, [])
+
+  // Add function to fetch countries in the SearchPage component
+  const fetchCountries = async () => {
+    try {
+      // Fetch all countries from REST Countries API
+      const response = await fetch('https://restcountries.com/v3.1/all?fields=name')
+      if (!response.ok) throw new Error('Failed to fetch countries')
+      
+      const countriesData = await response.json()
+      // Extract and sort country names
+      return countriesData
+        .map((country: any) => country.name.common)
+        .sort((a: string, b: string) => a.localeCompare(b))
+    } catch (error) {
+      console.error('Error fetching countries:', error)
+      // Fallback countries
+      return [
+        'United States', 'Canada', 'United Kingdom', 'Australia', 
+        'Germany', 'France', 'Japan', 'Brazil', 'India', 'China',
+        'South Africa', 'Mexico', 'Italy', 'Spain', 'Russia'
+      ]
+    }
+  }
+
+  // Add to useEffect to fetch countries when component mounts
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Fetch countries
+        const countriesList = await fetchCountries()
+        // Store countries in state
+        setCountries(countriesList)
+      } catch (error) {
+        console.error('Error loading countries:', error)
+        // Set fallback countries if API fails
+        setCountries([
+          'United States', 'Canada', 'United Kingdom', 'Australia', 
+          'Germany', 'France', 'Japan', 'Brazil', 'India', 'China',
+          'South Africa', 'Mexico', 'Italy', 'Spain', 'Russia'
+        ])
+      }
+    }
+    
+    loadData()
+  }, []) // Empty dependency array means this runs once when component mounts
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -253,6 +299,35 @@ export default function SearchPage() {
                     </div>
                   )}
                   <div className="space-y-2">
+                    <Label htmlFor="location">Country</Label>
+                    <Select 
+                      value={userLocation} 
+                      onValueChange={(value) => setUserLocation(value)}
+                    >
+                      <SelectTrigger id="location">
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        {/* Add a search option if you have many countries */}
+                        <Input
+                          placeholder="Search countries..."
+                          className="mb-2"
+                          // Add search functionality as needed
+                        />
+                        {/* List all countries fetched from API */}
+                        {countries.length > 0 ? (
+                          countries.map(country => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="loading">Loading countries...</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Availability</Label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -332,7 +407,7 @@ export default function SearchPage() {
                         <CardContent className="p-6">
                           <div className="flex items-center space-x-4">
                             <Avatar className="h-12 w-12">
-                              <AvatarImage src={provider.avatar_url} alt={provider.name} />
+                              <AvatarImage src={provider.avatar_url || undefined} alt={provider.name} />
                               <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
@@ -373,14 +448,81 @@ export default function SearchPage() {
 
           <TabsContent value="map" className="mt-6">
             <MapView
-              providers={providers.map((p) => ({
-                id: p.id,
-                name: p.name,
-                category: p.category,
-                location: p.location,
-                latitude: Math.random() * 0.1 + 40.7, // Mock data
-                longitude: Math.random() * 0.1 - 74.0, // Mock data
-              }))}
+              providers={providers.map((p) => {
+                // Create a map of countries to their approximate center coordinates
+                const countryCoordinates: Record<string, [number, number]> = {
+                  'United States': [37.0902, -95.7129],
+                  'Canada': [56.1304, -106.3468],
+                  'United Kingdom': [55.3781, -3.4360],
+                  'Australia': [-25.2744, 133.7751],
+                  'Germany': [51.1657, 10.4515],
+                  'France': [46.2276, 2.2137],
+                  'Japan': [36.2048, 138.2529],
+                  'Brazil': [-14.2350, -51.9253],
+                  'India': [20.5937, 78.9629],
+                  'China': [35.8617, 104.1954],
+                  'South Africa': [-30.5595, 22.9375],
+                  'Mexico': [23.6345, -102.5528],
+                  'Italy': [41.8719, 12.5674],
+                  'Spain': [40.4637, -3.7492],
+                  'Russia': [61.5240, 105.3188],
+                  'Argentina': [-38.4161, -63.6167],
+                  'Nigeria': [9.0820, 8.6753],
+                  'Egypt': [26.8206, 30.8025],
+                  'Saudi Arabia': [23.8859, 45.0792],
+                  'Turkey': [38.9637, 35.2433],
+                  'Indonesia': [-0.7893, 113.9213],
+                  'Thailand': [15.8700, 100.9925],
+                  'South Korea': [35.9078, 127.7669],
+                  'Pakistan': [30.3753, 69.3451],
+                  'Philippines': [12.8797, 121.7740],
+                  'Malaysia': [4.2105, 101.9758],
+                  'Singapore': [1.3521, 103.8198],
+                  'New Zealand': [-40.9006, 174.8860],
+                  // Add more countries as needed
+                };
+                
+                let latitude, longitude;
+                
+                // First try to extract coordinates from location if it's in "lat, lng" format
+                if (p.location && p.location.includes(',')) {
+                  const [lat, lng] = p.location.split(',').map(coord => parseFloat(coord.trim()));
+                  if (!isNaN(lat) && !isNaN(lng)) {
+                    latitude = lat;
+                    longitude = lng;
+                  }
+                }
+                
+                // If we couldn't extract coordinates, try to find the country in our map
+                if (!latitude || !longitude) {
+                  // Check if the location contains any of our known countries
+                  const country = Object.keys(countryCoordinates).find(c => 
+                    p.location.includes(c)
+                  );
+                  
+                  if (country) {
+                    // Use the known coordinates
+                    [latitude, longitude] = countryCoordinates[country];
+                    
+                    // Add a small random offset (±1 degree) to avoid overlapping markers
+                    latitude += (Math.random() - 0.5) * 2;
+                    longitude += (Math.random() - 0.5) * 2;
+                  } else {
+                    // Fallback to a default location (center of the world map) if country not found
+                    latitude = 0;
+                    longitude = 0;
+                  }
+                }
+                
+                return {
+                  id: p.id,
+                  name: p.name,
+                  category: p.category,
+                  location: p.location,
+                  latitude,
+                  longitude
+                };
+              })}
               onProviderSelect={(id) => router.push(`/providers/${id}`)}
             />
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -393,7 +535,7 @@ export default function SearchPage() {
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={provider.avatar_url} alt={provider.name} />
+                        <AvatarImage src={provider.avatar_url || undefined} alt={provider.name} />
                         <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>

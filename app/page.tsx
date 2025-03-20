@@ -3,7 +3,6 @@ import Link from "next/link"
 import { ArrowRight, CheckCircle, Star, MapPin, CreditCard } from "lucide-react"
 import ServiceCategoryCards from "@/components/service-category-cards"
 import { HowItWorks } from "@/components/how-it-works"
-import ChatbotButton from "@/components/chatbot-button"
 
 export default function Home() {
   return (
@@ -24,7 +23,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Link href="/get-started">
-                  <Button size="lg" className="gap-1">
+                  <Button className="h-11 px-8 gap-1">
                     Get Started <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -220,9 +219,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Chatbot Button */}
-      <ChatbotButton />
     </div>
   )
 }

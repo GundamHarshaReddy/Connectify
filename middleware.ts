@@ -1,55 +1,51 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Define public and protected paths outside of the middleware function
-// so they don't get recreated on every request
-const publicPaths = ["/", "/get-started", "/auth/login", "/auth/register", "/auth/forgot-password", "/how-it-works"]
-
-const protectedPaths = [
-  "/dashboard",
-  "/bookings",
-  "/messages",
-  "/profile"
-]
-
-// API paths should generally be excluded from auth checks to avoid circular dependencies
-const apiPaths = ["/api/"]
-
-export async function middleware(request: NextRequest) {
-  const res = NextResponse.next()
-  
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient({ req: request, res })
-  
-  const currentPath = new URL(request.url).pathname
-  
-  // Skip middleware for API routes to avoid auth-related issues
-  if (apiPaths.some(path => currentPath.startsWith(path))) {
+export async function middleware(req: NextRequest) {
+  try {
+    const res = NextResponse.next()
+    const pathname = req.nextUrl.pathname
+    
+    // Create a Supabase client configured to use cookies
+    const supabase = createMiddlewareClient({ req, res })
+    
+    // Refresh session if expired - required for server components
+    const { data } = await supabase.auth.getSession()
+    const session = data.session
+    
+    // Protected routes that require authentication
+    const protectedRoutes = ['/dashboard', '/profile', '/settings']
+    
+    // Auth routes that should redirect to dashboard if already logged in
+    const authRoutes = ['/auth/login', '/auth/register']
+    
+    // Special case for the root path - redirect to dashboard if authenticated
+    if (pathname === '/' && session) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    
+    // If user is on a protected route and not authenticated
+    if (protectedRoutes.some(route => pathname.startsWith(route)) && !session) {
+      const redirectUrl = new URL('/auth/login', req.url)
+      redirectUrl.searchParams.set('redirectedFrom', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+    
+    // If user is authenticated and trying to access auth routes
+    if (authRoutes.some(route => pathname.startsWith(route)) && session) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    
     return res
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // On error, allow the request to proceed to avoid blocking the user
+    return NextResponse.next()
   }
-  
-  // Refresh session if expired - takes advantage of Supabase's handling
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  
-  // Check if the path is protected and user is not authenticated
-  if (!session && protectedPaths.some(path => currentPath.startsWith(path))) {
-    // Create a URL to redirect to login page with the current URL as the redirectedFrom parameter
-    const redirectUrl = new URL('/auth/login', request.url)
-    redirectUrl.searchParams.set('redirectedFrom', currentPath)
-    return NextResponse.redirect(redirectUrl)
-  }
-  
-  // If the user is authenticated and tries to access auth pages, redirect to dashboard
-  if (session && currentPath.startsWith("/auth/")) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-  
-  return res
 }
 
+// Add specific matcher to avoid running on all routes
 export const config = {
   matcher: [
     /*
@@ -57,9 +53,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - public files (images, etc.)
+     * - api routes that should be accessible without auth
      */
-    "/((?!_next/static|_next/image|favicon.ico|public/).*)",
+    '/((?!_next/static|_next/image|favicon.ico|images|api/public).*)',
   ],
 }
 

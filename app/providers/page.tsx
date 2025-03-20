@@ -64,10 +64,25 @@ export default function ProvidersPage() {
 
   const fetchLocations = async () => {
     try {
-      // This is a placeholder. In a real app, you'd fetch actual locations
-      setLocations(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'])
+      // Fetch all countries from a REST Countries API
+      const response = await fetch('https://restcountries.com/v3.1/all?fields=name')
+      if (!response.ok) throw new Error('Failed to fetch countries')
+      
+      const countriesData = await response.json()
+      // Extract and sort country names
+      const countries = countriesData
+        .map((country: any) => country.name.common)
+        .sort((a: string, b: string) => a.localeCompare(b))
+      
+      setLocations(countries)
     } catch (error: any) {
       console.error('Error fetching locations:', error.message)
+      // Fallback to a basic list if API fails
+      setLocations([
+        'United States', 'Canada', 'United Kingdom', 'Australia', 
+        'Germany', 'France', 'Japan', 'Brazil', 'India', 'China',
+        'South Africa', 'Mexico', 'Italy', 'Spain', 'Russia'
+      ])
     }
   }
 
@@ -103,17 +118,26 @@ export default function ProvidersPage() {
       
       // Transform API data to match the Provider type
       if (data.providers) {
-        const formattedProviders: Provider[] = data.providers.map((p: any) => ({
-          id: p.id,
-          full_name: p.name,
-          avatar_url: p.avatar_url,
-          bio: p.description,
-          location: p.location,
-          avg_rating: p.rating,
-          service_category: p.category,
-          price_range: p.hourly_rate ? `$${p.hourly_rate}/hr` : undefined,
-          featured: Math.random() > 0.8 // Just for demo purposes
-        }))
+        const formattedProviders: Provider[] = data.providers.map((p: any) => {
+          // Ensure we don't have redundant data in name
+          let providerName = p.name;
+          if (p.category && providerName.includes(`${p.category} Provider`)) {
+            // If the name format is "Cleaning Provider", extract just the category
+            providerName = p.category;
+          }
+          
+          return {
+            id: p.id,
+            full_name: providerName,
+            avatar_url: p.avatar_url,
+            bio: p.description,
+            location: p.location,
+            avg_rating: p.rating,
+            service_category: p.category,
+            price_range: p.hourly_rate ? `$${p.hourly_rate}/hr` : undefined,
+            featured: Math.random() > 0.8 // Just for demo purposes
+          };
+        });
         setProviders(formattedProviders)
       } else {
         setProviders([])
@@ -185,13 +209,13 @@ export default function ProvidersPage() {
           </div>
           
           <div>
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">Country</Label>
             <Select value={location} onValueChange={setLocation}>
               <SelectTrigger id="location">
-                <SelectValue placeholder="All Locations" />
+                <SelectValue placeholder="All Countries" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem key="all-locations" value="all">All Locations</SelectItem>
+                <SelectItem key="all-locations" value="all">All Countries</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={`location-${loc}`} value={loc}>{loc}</SelectItem>
                 ))}
@@ -244,7 +268,7 @@ export default function ProvidersPage() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{provider.full_name}</CardTitle>
-                      {provider.service_category && (
+                      {provider.service_category && !provider.full_name.includes(provider.service_category) && (
                         <Badge variant="outline" className="mt-1">
                           {provider.service_category}
                         </Badge>
@@ -257,12 +281,16 @@ export default function ProvidersPage() {
                 </div>
               </CardHeader>
               <CardContent className="pb-4">
-                {provider.bio && <p className="text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{provider.bio}</p>}
+                {provider.bio ? (
+                  <p className="text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{provider.bio}</p>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 mb-4 italic">No description available</p>
+                )}
                 
                 <div className="flex items-center gap-1 mb-2">
                   {renderRatingStars(provider.avg_rating)}
                   <span className="text-sm text-gray-500 ml-1">
-                    {provider.avg_rating?.toFixed(1) || "New"} {provider.total_bookings ? `(${provider.total_bookings} bookings)` : ""}
+                    {provider.avg_rating ? provider.avg_rating.toFixed(1) : "New"} {provider.total_bookings ? `(${provider.total_bookings} bookings)` : ""}
                   </span>
                 </div>
                 

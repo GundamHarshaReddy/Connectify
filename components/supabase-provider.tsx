@@ -1,55 +1,44 @@
-"use client"
+'use client'
 
-import { createContext, useContext, useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { type SupabaseClient } from "@supabase/supabase-js"
+import { createContext, useContext, useEffect, useState } from 'react'
+import { createClientComponentClient, type Session } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/types/supabase'
 
 type SupabaseContext = {
-  supabase: SupabaseClient
+  supabase: SupabaseClient<Database>
+  session: Session | null
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
-export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const [supabase] = useState(() => createClient())
+export default function SupabaseProvider({ 
+  children,
+  session: initialSession,
+}: { 
+  children: React.ReactNode
+  session: Session | null
+}) {
+  const [session, setSession] = useState<Session | null>(initialSession)
+  const supabase = createClientComponentClient<Database>()
   const router = useRouter()
 
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      // Update cookie when auth state changes
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // If we have a session, update the session cookie
-        if (session) {
-          // Call our session API route to sync server-side session
-          fetch('/api/auth/session', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ session }),
-          }).then(() => {
-            // After updating the session, refresh the page
-            router.refresh()
-          })
-        }
-      }
-      
-      if (event === "SIGNED_OUT") {
-        // Clear any session data and refresh
-        router.refresh()
-      }
+    } = supabase.auth.onAuthStateChange((_, session) => {
+      setSession(session)
+      router.refresh()
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, supabase])
+  }, [supabase, router])
 
   return (
-    <Context.Provider value={{ supabase }}>
+    <Context.Provider value={{ supabase, session }}>
       {children}
     </Context.Provider>
   )
@@ -58,7 +47,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 export const useSupabase = () => {
   const context = useContext(Context)
   if (context === undefined) {
-    throw new Error("useSupabase must be used inside SupabaseProvider")
+    throw new Error('useSupabase must be used inside SupabaseProvider')
   }
   return context
 }

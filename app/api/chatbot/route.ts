@@ -11,8 +11,11 @@ export async function POST(req: Request) {
     const { messages } = await req.json()
     const supabase = createClient()
   
+    // Initialize the GROQ client correctly
+    const model = groq("llama3-70b-8192")
+
     const result = await streamText({
-      model: groq("llama3-70b-8192", { apiKey: process.env.GROQ_API_KEY }),
+      model,
       messages: convertToCoreMessages(messages),
       system: `You are a helpful assistant for the Local Services Connector platform. 
       Your goal is to help users find and book local service providers.
@@ -107,4 +110,3 @@ export async function POST(req: Request) {
     })
   }
 }
-

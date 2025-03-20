@@ -1,3 +1,5 @@
+import { withLayout } from 'next-compose-plugins';
+
 let userConfig = undefined
 try {
   userConfig = await import('./v0-user-next.config')
@@ -7,6 +9,7 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -37,6 +40,7 @@ const nextConfig = {
   },
   // Optimize images
   images: {
+    domains: ['images.unsplash.com', 'localhost'], // If you're using unsplash directly
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
   },
