@@ -38,6 +38,29 @@ export async function DELETE(request: NextRequest) {
       throw error
     }
     
+    // Also manually clear the auth cookie
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const keyPart = supabaseUrl ? supabaseUrl.split('.')[0].split('//')[1] : ''
+    
+    // Clear the cookie by setting it with empty value and expired date
+    const cookieStore = await cookies()
+    cookieStore.set({
+      name: `sb-${keyPart}-auth-token`,
+      value: '',
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0)
+    })
+    
+    // Also clear with path specified if needed
+    cookieStore.set({
+      name: `sb-${keyPart}-auth-token`,
+      value: '',
+      path: '/api',
+      maxAge: 0,
+      expires: new Date(0)
+    })
+    
     return NextResponse.json({ status: 'success', message: 'Logged out successfully' })
   } catch (error) {
     console.error('Session DELETE error:', error)
@@ -51,15 +74,14 @@ export async function DELETE(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const { session } = await request.json()
-    // Get the cookie store directly, not through an intermediate variable
-    // which makes TypeScript inference work correctly
+    // Get the cookie store directly
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const keyPart = supabaseUrl ? supabaseUrl.split('.')[0].split('//')[1] : ''
+    const cookieStore = await cookies()
     
     if (session) {
-      
       // Set session cookie
-      (await cookies()).set({
+      cookieStore.set({
         name: `sb-${keyPart}-auth-token`,
         value: JSON.stringify(session),
         path: '/',
@@ -69,7 +91,7 @@ export async function POST(request: Request) {
       })
     } else {      
       // Clear session cookie
-      (await cookies()).set({
+      cookieStore.set({
         name: `sb-${keyPart}-auth-token`,
         value: '',
         path: '/',
@@ -84,4 +106,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 })
   }
 }
-
