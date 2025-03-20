@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get('code')
     
     if (!code) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      console.error('No code provided in callback')
+      return NextResponse.redirect(new URL('/auth/login?error=missing_code', request.url))
     }
 
     // Get the next path or default to dashboard
@@ -19,7 +20,17 @@ export async function GET(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     
     // Exchange the code for a session
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (error || !data.session) {
+      console.error('Auth exchange error:', error)
+      return NextResponse.redirect(
+        new URL(`/auth/login?error=${encodeURIComponent(error?.message || 'Authentication failed')}`, request.url)
+      )
+    }
+    
+    // Log successful authentication
+    console.log('Successfully authenticated user:', data.session.user.id)
     
     // Redirect to the intended page
     return NextResponse.redirect(new URL(next, request.url))

@@ -9,10 +9,14 @@ export async function GET(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { data: { session } } = await supabase.auth.getSession()
     
+    // Include detailed user info in the response
     return NextResponse.json({ 
       status: 'success', 
-      data: { session },
-      user: session?.user || null 
+      data: { 
+        session,
+        authenticated: !!session,
+        user: session?.user || null 
+      }
     })
   } catch (error) {
     console.error('Session GET error:', error)
@@ -28,7 +32,11 @@ export async function DELETE(request: NextRequest) {
   try {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      throw error
+    }
     
     return NextResponse.json({ status: 'success', message: 'Logged out successfully' })
   } catch (error) {

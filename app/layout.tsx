@@ -22,29 +22,30 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Get session server-side for initial state
   const supabase = createServerComponentClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <SupabaseProvider session={session}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SupabaseProvider session={session}>
+            <AuthProvider>
               <div className="relative flex min-h-screen flex-col">
                 <Header />
                 <main className="flex-1">{children}</main>
               </div>
               <Toaster />
               <ConditionalChatbot />
-            </SupabaseProvider>
-          </ThemeProvider>
-        </AuthProvider>
+            </AuthProvider>
+          </SupabaseProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

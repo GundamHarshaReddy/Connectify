@@ -7,56 +7,100 @@ export async function middleware(req: NextRequest) {
     const res = NextResponse.next()
     const pathname = req.nextUrl.pathname
     
-    // Create a Supabase client configured to use cookies
+    // Skip processing for static assets and API routes
+    if (
+      pathname.includes('_next') || 
+      pathname.includes('static') || 
+      pathname.includes('favicon') ||
+      pathname.includes('.') // Skip files with extensions
+    ) {
+      return res
+    }
+    
+    // Allow API routes (except for middleware-protected ones)
+    if (pathname.startsWith('/api/') && !pathname.includes('/api/protected/')) {
+      return res
+    }
+    
+    // Check for sign-out URL parameter - only allow the login page
+    const url = new URL(req.url)
+    const isSignedOut = url.searchParams.get('signedOut') === 'true'
+    
+    // Create a Supabase client
     const supabase = createMiddlewareClient({ req, res })
     
-    // Refresh session if expired - required for server components
-    const { data } = await supabase.auth.getSession()
-    const session = data.session
+    // Check user session
+    const { data, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('Session error in middleware:', error)
+    }
+    
+    const session = data?.session
+    const isAuthenticated = !!session
+    
+    // Special handling for callback route
+    if (pathname === '/auth/callback') {
+      return res
+    }
     
     // Protected routes that require authentication
-    const protectedRoutes = ['/dashboard', '/profile', '/settings']
+    const protectedRoutes = [
+      '/dashboard', 
+      '/profile', 
+      '/settings', 
+      '/bookings',
+      '/messages',
+      '/provider'
+    ]
     
     // Auth routes that should redirect to dashboard if already logged in
-    const authRoutes = ['/auth/login', '/auth/register']
+    const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
     
-    // Special case for the root path - redirect to dashboard if authenticated
-    if (pathname === '/' && session) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+    // Check if current path is a protected route
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+    
+    // Check if current path is an auth route
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+    
+    // If signed out, only allow auth routes
+    if (isSignedOut && !isAuthRoute && pathname !== '/') {
+      console.log(`Middleware: User is signed out, redirecting from ${pathname} to homepage`)
+      return NextResponse.redirect(new URL(`/?signedOut=true&from=${pathname}`, req.url))
+    }
+    
+    // If signed out, only allow auth routes
+    if (isSignedOut && !isAuthRoute) {
+      console.log(`Middleware: User is signed out, redirecting from ${pathname} to login`)
+      return NextResponse.redirect(new URL(`/auth/login?signedOut=true&from=${pathname}`, req.url))
     }
     
     // If user is on a protected route and not authenticated
-    if (protectedRoutes.some(route => pathname.startsWith(route)) && !session) {
+    if (isProtectedRoute && !isAuthenticated) {
+      console.log(`Middleware: Redirecting unauthenticated user from ${pathname} to login`)
       const redirectUrl = new URL('/auth/login', req.url)
       redirectUrl.searchParams.set('redirectedFrom', pathname)
       return NextResponse.redirect(redirectUrl)
     }
     
     // If user is authenticated and trying to access auth routes
-    if (authRoutes.some(route => pathname.startsWith(route)) && session) {
+    if (isAuthRoute && isAuthenticated && !isSignedOut) {
+      console.log(`Middleware: Redirecting authenticated user from ${pathname} to dashboard`)
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     
     return res
   } catch (error) {
     console.error('Middleware error:', error)
-    // On error, allow the request to proceed to avoid blocking the user
-    return NextResponse.next()
+    // On error, redirect to login to be safe
+    return NextResponse.redirect(new URL('/auth/login?error=middleware_error', req.url))
   }
 }
 
-// Add specific matcher to avoid running on all routes
+// Configure paths to run middleware on - be more specific with what the middleware protects
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (images, etc.)
-     * - api routes that should be accessible without auth
-     */
-    '/((?!_next/static|_next/image|favicon.ico|images|api/public).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
 

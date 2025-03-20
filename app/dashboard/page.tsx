@@ -9,6 +9,7 @@ import DashboardRedirect from '@/components/DashboardRedirect'
 import { loadStripe } from '@stripe/stripe-js'
 import PaymentTestForm from '@/components/PaymentTestForm'
 import { useSearchParams } from 'next/navigation'
+import AuthGuard from "@/components/AuthGuard"
 
 // Initialize Stripe with a public key from environment variables
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx')
@@ -48,10 +49,17 @@ export default function DashboardPage() {
   const [session, setSession] = useState<any>(null)
   const searchParams = useSearchParams()
 
-  // Get session on component mount
+  // Get session on component mount and check validity
   useEffect(() => {
     const getSession = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
+      
+      // If no session is found, redirect to login
+      if (!currentSession) {
+        window.location.href = '/auth/login?redirectedFrom=/dashboard'
+        return
+      }
+      
       setSession(currentSession)
     }
     getSession()
@@ -128,8 +136,7 @@ export default function DashboardPage() {
   }
   
   return (
-    <>
-      <DashboardRedirect />
+    <AuthGuard>
       <div className="container py-10">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
         
@@ -227,7 +234,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </>
+    </AuthGuard>
   )
 }
 

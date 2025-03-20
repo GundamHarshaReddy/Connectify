@@ -111,10 +111,18 @@ export default function RegisterPage() {
       setLoading(true)
       setError(null)
       
+      // Ensure we're using the correct redirect URL with explicit next path
+      const redirectUrl = new URL('/auth/callback', window.location.origin)
+      redirectUrl.searchParams.set('next', '/dashboard')
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: redirectUrl.toString(),
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
         },
       })
       

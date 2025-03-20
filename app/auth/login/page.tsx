@@ -28,6 +28,16 @@ export default function LoginPage() {
     // Clear any error when component mounts or when email/password changes
     setError(null)
     
+    // Check for sign out message with proper parameter
+    const signedOut = searchParams.get("signedOut")
+    if (signedOut === "true") {
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+        duration: 3000,
+      })
+    }
+    
     // Check for error message in URL
     const errorMsg = searchParams.get("error")
     if (errorMsg) {
@@ -122,17 +132,21 @@ export default function LoginPage() {
         redirectUrl.searchParams.set('next', '/dashboard')
       }
       
+      // Use signInWithOAuth with the correct options
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl.toString(),
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
         },
       })
       
       if (error) throw error
       
       // The OAuth flow will redirect the user away from this page
-      // No need to do anything else here
     } catch (error: any) {
       console.error('Google login error:', error)
       setError(error.message || "Failed to login with Google")

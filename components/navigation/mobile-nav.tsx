@@ -22,11 +22,13 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/AuthProvider"
 
 export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { supabase } = useSupabase()
+  const { signOut } = useAuth() // Add this line to import signOut function
   const [isOpen, setIsOpen] = React.useState(false)
   const [unreadCount, setUnreadCount] = React.useState(0)
   const [isAuthenticated, setIsAuthenticated] = React.useState(false)
@@ -66,9 +68,17 @@ export function MobileNav() {
   }
   
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
-    setIsOpen(false)
+    try {
+      setIsOpen(false) // Close the mobile menu first
+      // Disable any interactions during sign-out
+      setIsAuthenticated(false)
+      // Use the AuthProvider's signOut function
+      await signOut()
+    } catch (error) {
+      console.error("Error signing out:", error)
+      // If signOut fails, force redirect
+      window.location.href = '/auth/login?error=sign_out_failed'
+    }
   }
   
   if (!isAuthenticated) return null

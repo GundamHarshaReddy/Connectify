@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/AuthProvider"
 
 interface MainNavProps {
   className?: string
@@ -25,6 +26,7 @@ export default function MainNav({ className }: MainNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { supabase } = useSupabase()
+  const { signOut } = useAuth() // Add this line to import signOut function
   const [unreadCount, setUnreadCount] = useState(0)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -67,8 +69,16 @@ export default function MainNav({ className }: MainNavProps) {
   }
   
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
+    try {
+      // Disable any interactions during sign-out
+      setIsAuthenticated(false)
+      // Use the AuthProvider's signOut function
+      await signOut()
+    } catch (error) {
+      console.error("Error signing out:", error)
+      // If signOut fails, force redirect
+      window.location.href = '/auth/login?error=sign_out_failed'
+    }
   }
   
   if (!isAuthenticated) return null
