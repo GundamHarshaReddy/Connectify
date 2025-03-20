@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server'
 // Get session data
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Create Supabase client correctly
+    const supabase = createRouteHandlerClient({ cookies })
     const { data: { session } } = await supabase.auth.getSession()
     
     // Include detailed user info in the response
@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
 // Handle logging out
 export async function DELETE(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Create Supabase client correctly
+    const supabase = createRouteHandlerClient({ cookies })
     const { error } = await supabase.auth.signOut()
     
     if (error) {
@@ -51,13 +51,15 @@ export async function DELETE(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const { session } = await request.json()
-    const cookieStore = await cookies()
+    // Get the cookie store directly, not through an intermediate variable
+    // which makes TypeScript inference work correctly
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const keyPart = supabaseUrl ? supabaseUrl.split('.')[0].split('//')[1] : ''
     
     if (session) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const keyPart = supabaseUrl ? supabaseUrl.split('.')[0].split('//')[1] : ''
       
-      await cookieStore.set({
+      // Set session cookie
+      (await cookies()).set({
         name: `sb-${keyPart}-auth-token`,
         value: JSON.stringify(session),
         path: '/',
@@ -65,10 +67,15 @@ export async function POST(request: Request) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production'
       })
-    } else {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const keyPart = supabaseUrl ? supabaseUrl.split('.')[0].split('//')[1] : ''
-      await cookieStore.delete(`sb-${keyPart}-auth-token`)
+    } else {      
+      // Clear session cookie
+      (await cookies()).set({
+        name: `sb-${keyPart}-auth-token`,
+        value: '',
+        path: '/',
+        maxAge: 0,
+        expires: new Date(0)
+      })
     }
 
     return NextResponse.json({ status: 'ok' })

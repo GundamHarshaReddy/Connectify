@@ -1,0 +1,445 @@
+[
+  {
+    "id": "prov-001",
+    "profile_id": "usr-001",
+    "name": "Sarah Johnson",
+    "category": "Tutoring",
+    "subcategory": "Mathematics",
+    "avatar_url": "/providers/avatar-1.jpg",
+    "rating": 4.8,
+    "reviews_count": 32,
+    "location": "New York, NY",
+    "hourly_rate": 45,
+    "description": "Certified math teacher with 8+ years of experience specializing in algebra, calculus, and geometry. I help students build strong foundations in mathematics and prepare for standardized tests.",
+    "availability": {
+      "monday": ["09:00-12:00", "15:00-18:00"],
+      "tuesday": ["09:00-12:00", "15:00-18:00"],
+      "wednesday": ["13:00-20:00"],
+      "thursday": ["09:00-12:00", "15:00-18:00"],
+      "friday": ["09:00-12:00", "15:00-18:00"],
+      "saturday": ["10:00-15:00"],
+      "sunday": []
+    },
+    "education": [
+      {
+        "degree": "Master's in Mathematics Education",
+        "institution": "Columbia University",
+        "year": 2015
+      }
+    ],
+    "services": [
+      {
+        "name": "One-on-one Tutoring",
+        "description": "Personalized math instruction tailored to student needs",
+        "price": 45,
+        "duration": 60
+      },
+      {
+        "name": "Test Preparation",
+        "description": "SAT/ACT math section preparation",
+        "price": 55,
+        "duration": 90
+      }
+    ],
+    "languages": ["English", "Spanish"]
+  },
+  {
+    "id": "prov-002",
+    "profile_id": "usr-002",
+    "name": "Michael Chen",
+    "category": "Home Repair",
+    "subcategory": "Electrical",
+    "avatar_url": "/providers/avatar-2.jpg",
+    "rating": 4.9,
+    "reviews_count": 87,
+    "location": "San Francisco, CA",
+    "hourly_rate": 75,
+    "description": "Licensed electrician with over 15 years of experience in residential and commercial electrical work. Specializing in troubleshooting, installations, and electrical system upgrades.",
+    "availability": {
+      "monday": ["08:00-17:00"],
+      "tuesday": ["08:00-17:00"],
+      "wednesday": ["08:00-17:00"],
+      "thursday": ["08:00-17:00"],
+      "friday": ["08:00-17:00"],
+      "saturday": ["09:00-14:00"],
+      "sunday": []
+    },
+    "certifications": [
+      {
+        "name": "Master Electrician License",
+        "issuer": "California State Board",
+        "year": 2010
+      }
+    ],
+    "services": [
+      {
+        "name": "Electrical Troubleshooting",
+        "description": "Diagnosing and fixing electrical issues",
+        "price": 75,
+        "duration": 60
+      },
+      {
+        "name": "Outlet Installation",
+        "description": "Installing new electrical outlets",
+        "price": 60,
+        "flat_rate": true
+      }
+    ],
+    "languages": ["English", "Mandarin"]
+  },
+  {
+    "id": "prov-003",
+    "profile_id": "usr-003",
+    "name": "Jessica Martinez",
+    "category": "Personal Training",
+    "subcategory": "Weight Loss",
+    "avatar_url": "/providers/avatar-3.jpg",
+    "rating": 4.7,
+    "reviews_count": 56,
+    "location": "Miami, FL",
+    "hourly_rate": 65,
+    "description": "Certified personal trainer specializing in weight loss and strength training. I create personalized workout and nutrition plans to help clients achieve their fitness goals.",
+    "availability": {
+      "monday": ["06:00-10:00", "16:00-20:00"],
+      "tuesday": ["06:00-10:00", "16:00-20:00"],
+      "wednesday": ["06:00-10:00", "16:00-20:00"],
+      "thursday": ["06:00-10:00", "16:00-20:00"],
+      "friday": ["06:00-10:00", "16:00-20:00"],
+      "saturday": ["08:00-12:00"],
+      "sunday": []
+    },
+    "certifications": [
+      {
+        "name": "NASM Certified Personal Trainer",
+        "issuer": "National Academy of Sports Medicine",
+        "year": 2018
+      },
+      {
+        "name": "Precision Nutrition Certification",
+        "issuer": "Precision Nutrition",
+        "year": 2019
+      }
+    ],
+    "services": [
+      {
+        "name": "One-on-one Training",
+        "description": "Personalized workout sessions",
+        "price": 65,
+        "duration": 60
+      },
+      {
+        "name": "Nutrition Consultation",
+        "description": "Custom meal planning and nutritional advice",
+        "price": 85,
+        "duration": 90
+      }
+    ],
+    "languages": ["English", "Spanish"]
+  },
+  {
+    "id": "prov-004",
+    "profile_id": "usr-004",
+    "name": "David Williams",
+    "category": "Cleaning",
+    "subcategory": "Deep Cleaning",
+    "avatar_url": "/providers/avatar-4.jpg",
+    "rating": 4.5,
+    "reviews_count": 42,
+    "location": "Chicago, IL",
+    "hourly_rate": 40,
+    "description": "Professional cleaner with attention to detail. Specializing in deep cleaning, move-in/move-out cleaning, and regular maintenance for homes and apartments.",
+    "availability": {
+      "monday": ["09:00-18:00"],
+      "tuesday": ["09:00-18:00"],
+      "wednesday": ["09:00-18:00"],
+      "thursday": ["09:00-18:00"],
+      "friday": ["09:00-18:00"],
+      "saturday": [],
+      "sunday": []
+    },
+    "services": [
+      {
+        "name": "Deep Cleaning",
+        "description": "Thorough cleaning of all areas including hard-to-reach places",
+        "price": 120,
+        "flat_rate": true
+      },
+      {
+        "name": "Regular Maintenance Cleaning",
+        "description": "Weekly or bi-weekly cleaning service",
+        "price": 80,
+        "flat_rate": true
+      }
+    ],
+    "languages": ["English"]
+  },
+  {
+    "id": "prov-005",
+    "profile_id": "usr-005",
+    "name": "Amanda Lee",
+    "category": "Beauty & Wellness",
+    "subcategory": "Massage Therapy",
+    "avatar_url": "/providers/avatar-5.jpg",
+    "rating": 4.9,
+    "reviews_count": 104,
+    "location": "Los Angeles, CA",
+    "hourly_rate": 90,
+    "description": "Licensed massage therapist with 10+ years of experience. Specializing in deep tissue, Swedish, and prenatal massage. I help clients reduce stress, alleviate pain, and improve overall wellness.",
+    "availability": {
+      "monday": ["10:00-19:00"],
+      "tuesday": ["10:00-19:00"],
+      "wednesday": [],
+      "thursday": ["10:00-19:00"],
+      "friday": ["10:00-19:00"],
+      "saturday": ["09:00-16:00"],
+      "sunday": []
+    },
+    "certifications": [
+      {
+        "name": "Licensed Massage Therapist",
+        "issuer": "California Massage Therapy Board",
+        "year": 2012
+      }
+    ],
+    "services": [
+      {
+        "name": "Deep Tissue Massage",
+        "description": "Focused massage to release chronic muscle tension",
+        "price": 90,
+        "duration": 60
+      },
+      {
+        "name": "Swedish Massage",
+        "description": "Relaxation massage with lighter pressure",
+        "price": 80,
+        "duration": 60
+      }
+    ],
+    "languages": ["English", "Korean"]
+  },
+  {
+    "id": "prov-006",
+    "profile_id": "usr-006",
+    "name": "Robert Taylor",
+    "category": "Auto Repair",
+    "subcategory": "General Maintenance",
+    "avatar_url": "/providers/avatar-6.jpg",
+    "rating": 4.7,
+    "reviews_count": 63,
+    "location": "Houston, TX",
+    "hourly_rate": 85,
+    "description": "ASE certified mechanic with 20+ years of experience. I provide honest, reliable auto repair and maintenance services at fair prices.",
+    "availability": {
+      "monday": ["08:00-18:00"],
+      "tuesday": ["08:00-18:00"],
+      "wednesday": ["08:00-18:00"],
+      "thursday": ["08:00-18:00"],
+      "friday": ["08:00-18:00"],
+      "saturday": ["09:00-14:00"],
+      "sunday": []
+    },
+    "certifications": [
+      {
+        "name": "ASE Master Technician",
+        "issuer": "National Institute for Automotive Service Excellence",
+        "year": 2008
+      }
+    ],
+    "services": [
+      {
+        "name": "Oil Change",
+        "description": "Full-service oil change with filter",
+        "price": 45,
+        "flat_rate": true
+      },
+      {
+        "name": "Brake Service",
+        "description": "Brake pad replacement and inspection",
+        "price": 150,
+        "flat_rate": true
+      }
+    ],
+    "languages": ["English", "Spanish"]
+  },
+  {
+    "id": "prov-007",
+    "profile_id": "usr-007",
+    "name": "Emily Wilson",
+    "category": "Music Lessons",
+    "subcategory": "Piano",
+    "avatar_url": "/providers/avatar-7.jpg",
+    "rating": 4.8,
+    "reviews_count": 38,
+    "location": "Boston, MA",
+    "hourly_rate": 55,
+    "description": "Berklee College of Music graduate with 9 years of teaching experience. I teach piano to students of all ages and levels, specializing in classical and jazz techniques.",
+    "availability": {
+      "monday": ["14:00-20:00"],
+      "tuesday": ["14:00-20:00"],
+      "wednesday": ["14:00-20:00"],
+      "thursday": ["14:00-20:00"],
+      "friday": ["14:00-20:00"],
+      "saturday": ["10:00-15:00"],
+      "sunday": []
+    },
+    "education": [
+      {
+        "degree": "Bachelor of Music in Piano Performance",
+        "institution": "Berklee College of Music",
+        "year": 2014
+      }
+    ],
+    "services": [
+      {
+        "name": "Private Piano Lessons",
+        "description": "One-on-one piano instruction for all skill levels",
+        "price": 55,
+        "duration": 60
+      },
+      {
+        "name": "Music Theory Lessons",
+        "description": "Comprehensive music theory instruction",
+        "price": 50,
+        "duration": 60
+      }
+    ],
+    "languages": ["English", "French"]
+  },
+  {
+    "id": "prov-008",
+    "profile_id": "usr-008",
+    "name": "Thomas Brown",
+    "category": "Tech Support",
+    "subcategory": "Computer Repair",
+    "avatar_url": "/providers/avatar-8.jpg",
+    "rating": 4.6,
+    "reviews_count": 51,
+    "location": "Seattle, WA",
+    "hourly_rate": 70,
+    "description": "CompTIA A+ certified technician with 12 years of experience. I provide computer repair, data recovery, virus removal, and general tech support for both Windows and Mac systems.",
+    "availability": {
+      "monday": ["09:00-18:00"],
+      "tuesday": ["09:00-18:00"],
+      "wednesday": ["09:00-18:00"],
+      "thursday": ["09:00-18:00"],
+      "friday": ["09:00-18:00"],
+      "saturday": ["10:00-15:00"],
+      "sunday": []
+    },
+    "certifications": [
+      {
+        "name": "CompTIA A+",
+        "issuer": "CompTIA",
+        "year": 2016
+      },
+      {
+        "name": "Apple Certified Mac Technician",
+        "issuer": "Apple",
+        "year": 2018
+      }
+    ],
+    "services": [
+      {
+        "name": "Computer Diagnostics & Repair",
+        "description": "Identifying and fixing hardware/software issues",
+        "price": 70,
+        "duration": 60
+      },
+      {
+        "name": "Virus & Malware Removal",
+        "description": "Complete system cleanup and security implementation",
+        "price": 90,
+        "flat_rate": true
+      }
+    ],
+    "languages": ["English"]
+  },
+  {
+    "id": "prov-009",
+    "profile_id": "usr-009",
+    "name": "Olivia Rodriguez",
+    "category": "Tutoring",
+    "subcategory": "Language",
+    "avatar_url": "/providers/avatar-9.jpg",
+    "rating": 4.9,
+    "reviews_count": 45,
+    "location": "Austin, TX",
+    "hourly_rate": 50,
+    "description": "Multilingual language instructor with a Master's in Linguistics. I teach Spanish and Portuguese to students of all levels, focusing on conversation skills and practical application.",
+    "availability": {
+      "monday": ["09:00-12:00", "16:00-20:00"],
+      "tuesday": ["09:00-12:00", "16:00-20:00"],
+      "wednesday": ["09:00-12:00", "16:00-20:00"],
+      "thursday": ["09:00-12:00", "16:00-20:00"],
+      "friday": ["09:00-12:00", "16:00-20:00"],
+      "saturday": ["10:00-14:00"],
+      "sunday": []
+    },
+    "education": [
+      {
+        "degree": "Master's in Linguistics",
+        "institution": "University of Texas at Austin",
+        "year": 2017
+      }
+    ],
+    "services": [
+      {
+        "name": "Spanish Lessons",
+        "description": "Private Spanish instruction for all levels",
+        "price": 50,
+        "duration": 60
+      },
+      {
+        "name": "Portuguese Lessons",
+        "description": "Private Portuguese instruction for all levels",
+        "price": 50,
+        "duration": 60
+      }
+    ],
+    "languages": ["English", "Spanish", "Portuguese"]
+  },
+  {
+    "id": "prov-010",
+    "profile_id": "usr-010",
+    "name": "James Parker",
+    "category": "Photography",
+    "subcategory": "Portrait",
+    "avatar_url": "/providers/avatar-10.jpg",
+    "rating": 4.8,
+    "reviews_count": 72,
+    "location": "Portland, OR",
+    "hourly_rate": 120,
+    "description": "Professional photographer with 10+ years of experience. I specialize in portrait photography, family sessions, and headshots, delivering high-quality images that capture authentic moments.",
+    "availability": {
+      "monday": ["10:00-18:00"],
+      "tuesday": ["10:00-18:00"],
+      "wednesday": ["10:00-18:00"],
+      "thursday": ["10:00-18:00"],
+      "friday": ["10:00-18:00"],
+      "saturday": ["09:00-16:00"],
+      "sunday": ["09:00-16:00"]
+    },
+    "education": [
+      {
+        "degree": "Bachelor of Fine Arts in Photography",
+        "institution": "Rhode Island School of Design",
+        "year": 2010
+      }
+    ],
+    "services": [
+      {
+        "name": "Portrait Session",
+        "description": "1-hour professional portrait photography session with 10 edited images",
+        "price": 250,
+        "flat_rate": true
+      },
+      {
+        "name": "Professional Headshots",
+        "description": "Corporate or personal headshots with 5 edited images",
+        "price": 175,
+        "flat_rate": true
+      }
+    ],
+    "languages": ["English"]
+  }
+]

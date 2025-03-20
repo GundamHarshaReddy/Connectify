@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Create Supabase client correctly
+    const supabase = createRouteHandlerClient({ cookies })
     
     // Sign out from Supabase
     const { error } = await supabase.auth.signOut()
@@ -15,20 +15,13 @@ export async function POST(request: NextRequest) {
     }
     
     // Clear all auth-related cookies
+    const cookieStore = await cookies()
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    
     if (supabaseUrl) {
       const keyPart = supabaseUrl.split('.')[0].split('//')[1]
       
-      // Delete standard cookie format
-      cookieStore.delete(`sb-${keyPart}-auth-token`)
-      
-      // Delete with path specified
-      cookieStore.delete({
-        name: `sb-${keyPart}-auth-token`,
-        path: '/',
-      })
-      
-      // Clear with options that match how the cookie was set
+      // Use the set method with expired date to delete cookies
       cookieStore.set({
         name: `sb-${keyPart}-auth-token`,
         value: '',
@@ -41,9 +34,15 @@ export async function POST(request: NextRequest) {
       })
       
       // Clear any other Supabase-related cookies
-      Array.from(cookieStore.getAll()).forEach(cookie => {
+      Array.from(cookieStore.getAll()).forEach((cookie: { name: string }) => {
         if (cookie.name.includes('supabase') || cookie.name.includes('sb-')) {
-          cookieStore.delete(cookie.name)
+          cookieStore.set({
+            name: cookie.name,
+            value: '',
+            path: '/',
+            maxAge: 0,
+            expires: new Date(0),
+          })
         }
       });
     }
@@ -72,20 +71,24 @@ export async function POST(request: NextRequest) {
 // Also handle GET requests to support direct navigation
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Create Supabase client correctly
+    const supabase = createRouteHandlerClient({ cookies })
     
     // Sign out from Supabase
     await supabase.auth.signOut()
     
-    // Clear cookies (same as in POST)
+    // Clear cookies using set method with expired date
+    const cookieStore = await cookies()
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    
     if (supabaseUrl) {
       const keyPart = supabaseUrl.split('.')[0].split('//')[1]
-      cookieStore.delete(`sb-${keyPart}-auth-token`)
-      cookieStore.delete({
+      cookieStore.set({
         name: `sb-${keyPart}-auth-token`,
+        value: '',
         path: '/',
+        maxAge: 0,
+        expires: new Date(0),
       })
     }
     

@@ -6,7 +6,7 @@ import { Database } from "@/types/supabase"
 // Get all conversations for the current user
 export async function GET() {
   try {
-    // Create Supabase client and await it
+    // Create Supabase client correctly
     const supabase = createRouteHandlerClient<Database>({ cookies })
     
     // Check if user is authenticated
